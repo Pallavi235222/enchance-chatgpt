@@ -4,7 +4,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const configuration = new Configuration({
     organization: "org-Ea1RTcFD9pcogOFa8oHfKHg1",
-    apiKey: "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",
+    apiKey: "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",
 });
 const openai = new OpenAIApi(configuration);
 
@@ -15,7 +15,7 @@ app.use(cors())
 const port = 3080
 
 app.post('/',async (req, res) => {
-    const { message } = req.body;
+    const { message, currentModel } = req.body;
     console.log(message, "message")
     const response = await openai.createCompletion({
         model: "text-davinci-003",
@@ -25,6 +25,17 @@ app.post('/',async (req, res) => {
     });
     res.json({
         message: response.data.choices[0].text,
+    })
+})
+
+
+
+app.get('/models',async (req, res) => {
+
+    const response = await openai.listEngines();
+    console.log(response.data.data)
+    res.json({
+        models: response.data.data
     })
 })
 

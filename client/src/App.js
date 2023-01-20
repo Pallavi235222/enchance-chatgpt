@@ -1,11 +1,19 @@
 import logo from './logo.svg';
 import './App.css';
 import "./normal.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 
 
 function App() {
+
+  useEffect(() => {
+    getEngines();
+  }, [])
+
   const [input, setInput] = useState("");
+  const [models, setModels] = useState([]);
+  const [currentModels, setCurrentModels] = useState("ada");
   const [chatLog, setChatLog] = useState([{
     user: "gpt",
     message: "How can I help you today?"
@@ -18,10 +26,30 @@ function App() {
     setChatLog([]);
   }
 
+  // function getEngines(){
+  //   fetch("http://localhost:3080/models")
+  //   .then(res => res.json())
+  //   .then(data => {
+  //     console.log(data.models.data)
+  //     setModels(data.models.data)})
+  // }
+  function getEngines(){
+    fetch("http://localhost:3080/models")
+    .then(res => res.json())
+    .then(data => {
+        if(data.models && data.models.data){
+            setModels(data.models.data);
+        }
+    })
+  }
+
+  
+
   async function handleSubmit(e) {
     e.preventDefault();
     let chatLogNew = [...chatLog, { user: "me", message: `${input}` }]
-    await setInput("");
+    setInput("");
+    setChatLog(chatLogNew)
     // fetch response to the api combining the chat log array of messages and sending it as a message to localhost:300 as a post
     const messages =  chatLogNew.map((message) => message.message).join("\n")
     const response = await fetch("http://localhost:3080", {
@@ -30,11 +58,12 @@ function App() {
         "content-Type": "application/json"
       },
       body: JSON.stringify({
-        message:messages 
+        message:messages,
+        currentModels,
       })
     });
     const data = await response.json();
-    await setChatLog([...chatLogNew, {user: "gpt", message: `${data.message}`}])
+    setChatLog([...chatLogNew, {user: "gpt", message: `${data.message}`}])
     
 
   }
@@ -44,6 +73,15 @@ function App() {
         <div className="side-menu-button" onClick={clearChat}>
           <span>+ </span>
           New chat
+        </div>
+        <div className="models">
+          <select onChange={(e)=>{
+            setCurrentModels(e.target.value)
+          }}>
+            {models.map((model, index) => (
+              <option key={model.id} value={model.id}>{model.id}</option>
+              ))}
+          </select>
         </div>
       </aside>
       <section className="chatbox">
@@ -71,10 +109,10 @@ function App() {
 
 const ChatMessage = ({ message }) => {
   return (
-    <div className={`chat-message ${message.user = "gpt" && "chatgpt"}`}>
+    <div className={`chat-message ${message.user === "gpt" && "chatgpt"}`}>
       <div className="chat-message-center">
-        <div className={`avatar ${message.user = "gpt" && "chatgpt"}`}>
-          {message.user = "gpt" && <svg
+      <div className={`avatar ${message.user === "gpt" && "chatgpt"}`}>
+          {message.user === "gpt" && <svg
             width={41}
             height={41}
             fill="none"
